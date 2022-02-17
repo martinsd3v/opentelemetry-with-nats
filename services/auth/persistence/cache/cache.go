@@ -2,9 +2,10 @@ package cache
 
 import (
 	"context"
-	"opentelemetry/utils"
-	"opentelemetry/utils/tracer"
 	"time"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/utils"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
 type cache struct {

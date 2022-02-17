@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
-	"opentelemetry/services/auth/persistence/cache"
-	"opentelemetry/services/auth/persistence/mysql"
-	"opentelemetry/utils/tracer"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/persistence/cache"
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/persistence/mysql"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
 type useCase struct{}

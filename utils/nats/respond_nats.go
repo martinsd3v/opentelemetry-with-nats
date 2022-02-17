@@ -2,7 +2,8 @@ package nats
 
 import (
 	"context"
-	"opentelemetry/utils/tracer"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/nats-io/nats.go"
 )

@@ -1,14 +1,14 @@
-module opentelemetry
+module github.com/martinsd3v/opentelemetry-with-nats
 
 go 1.17
 
 require (
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/nats-io/nats.go v1.13.1-0.20220121202836-972a071d373d
-	go.opentelemetry.io/otel v1.4.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.4.0
-	go.opentelemetry.io/otel/sdk v1.4.0
-	go.opentelemetry.io/otel/trace v1.4.0
+	go.opentelemetry.io/otel v1.4.1
+	go.opentelemetry.io/otel/exporters/jaeger v1.4.1
+	go.opentelemetry.io/otel/sdk v1.4.1
+	go.opentelemetry.io/otel/trace v1.4.1
 )
 
 require (

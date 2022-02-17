@@ -3,9 +3,9 @@ package events
 import (
 	"context"
 
-	useCase "opentelemetry/services/auth/use_cases"
-	natsUtil "opentelemetry/utils/nats"
-	"opentelemetry/utils/tracer"
+	useCase "github.com/martinsd3v/opentelemetry-with-nats/services/auth/use_cases"
+	natsUtil "github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/nats-io/nats.go"
 )

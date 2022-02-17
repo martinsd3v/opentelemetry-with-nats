@@ -3,9 +3,9 @@ package clients
 import (
 	"context"
 
-	"opentelemetry/services/auth/events"
-	natsUtil "opentelemetry/utils/nats"
-	"opentelemetry/utils/tracer"
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
+	natsUtil "github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/nats-io/nats.go"
 )

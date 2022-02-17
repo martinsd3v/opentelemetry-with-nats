@@ -2,7 +2,8 @@ package nats
 
 import (
 	"encoding/json"
-	"opentelemetry/utils/tracer"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
 type DataTransferWithTrace struct {

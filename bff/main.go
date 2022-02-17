@@ -2,10 +2,11 @@ package main
 
 import (
 	"net/http"
-	"opentelemetry/services/auth/clients"
-	"opentelemetry/services/auth/events"
-	"opentelemetry/utils/nats"
-	"opentelemetry/utils/tracer"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/clients"
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/labstack/echo/v4"
 )

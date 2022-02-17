@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"opentelemetry/services/auth/events"
-	"opentelemetry/utils/nats"
 	"runtime"
+
+	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
 )
 
 func main() {
