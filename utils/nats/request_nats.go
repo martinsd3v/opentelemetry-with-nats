@@ -1,0 +1,30 @@
+package nats
+
+import (
+	"context"
+	"opentelemetry/utils/tracer"
+
+	"github.com/nats-io/nats.go"
+)
+
+//RequestDto data transfer object
+type RequestDto struct {
+	Ctx         context.Context
+	Queue       string
+	Data        interface{}
+	SpanContext *tracer.SpanContext
+	NatsConn    *nats.Conn
+}
+
+//Request nats message request
+func Request(dto RequestDto) (*nats.Msg, error) {
+	data := DataToByte(dto.SpanContext, dto.Data)
+	msg, err := dto.NatsConn.RequestWithContext(dto.Ctx, dto.Queue, data)
+
+	if err != nil {
+		_, span := tracer.New(dto.Ctx).WithNewTrace("Nats/Request", "nats/Error")
+		defer span.Finish()
+	}
+
+	return msg, err
+}
