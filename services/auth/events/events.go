@@ -11,15 +11,16 @@ import (
 )
 
 type event struct {
-	conn *nats.Conn
+	conn    *nats.Conn
+	tracing tracer.Tracing
 }
 
 const (
 	QueueAuth = "queue-auth"
 )
 
-func Setup(conn *nats.Conn) {
-	e := event{conn: conn}
+func Setup(conn *nats.Conn, tracing tracer.Tracing) {
+	e := event{conn, tracing}
 	conn.QueueSubscribe(QueueAuth, "queue", e.auth)
 }
 
@@ -39,14 +40,13 @@ func (e *event) auth(msg *nats.Msg) {
 		spanConfig, err := natsUtil.ByteToData(msg.Data, &request)
 
 		ctx := tracer.ContextFromSpanContext(context.Background(), spanConfig)
-		ctx, span := tracer.New(ctx).WithNewTrace("ServiceAuth", "events/auth", tracer.SpanStartOption{
+		ctx, span := e.tracing.New(ctx).WithNewTrace("ServiceAuth", "events/auth", tracer.SpanStartOption{
 			Key:   "Receive data from nats",
 			Value: request,
 		})
 		defer span.Finish()
 
 		dto := natsUtil.RespondDto{
-			Ctx:         ctx,
 			SpanContext: spanConfig,
 			NatsMsg:     *msg,
 			Data:        response,
@@ -60,7 +60,7 @@ func (e *event) auth(msg *nats.Msg) {
 			return
 		}
 
-		services := useCase.New()
+		services := useCase.New(e.tracing)
 		services.HashPassword(ctx)
 		response.Auth = services.AuthUser(ctx, request.Email, request.Password)
 

@@ -12,34 +12,44 @@ import (
 )
 
 type Options struct {
-	EndpointURL string
-	ServiceName string
+	EndpointURL string `json:"endpointUrl"`
+	AgentHost   string `json:"agentHost"`
+	AgentPort   string `json:"agentPort"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	identifier  string
 }
 
-var singletonJaegerTracer = make(map[string]*tracerProviderJaeger)
-
-type tracerProviderJaeger struct {
+type Tracing struct {
 	provider *tracesdk.TracerProvider
+	options  Options
 	Error    error
 }
 
-func newJaegerTracer(tracerIdentifier string) *tracerProviderJaeger {
-	provider := tracerProviderJaeger{}
-	singletonJaegerTracer[tracerIdentifier] = provider.init(tracerIdentifier)
-	return singletonJaegerTracer[tracerIdentifier]
+func SetupJeagerTracer(options Options) Tracing {
+	trc := Tracing{options: options}
+	trc.init(options.identifier)
+	return trc
 }
 
-func (tracer *tracerProviderJaeger) init(tracerIdentifier string) *tracerProviderJaeger {
+func (tracing Tracing) New(ctx context.Context) *span {
+	return &span{
+		context: ctx,
+		tracing: tracing,
+	}
+}
+
+func (tracing *Tracing) init(tracerIdentifier string) *Tracing {
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(
 		jaeger.WithEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithUsername(""),
 		jaeger.WithPassword(""),
 	))
 	if err != nil {
-		tracer.Error = err
+		tracing.Error = err
 		return nil
 	}
-	tracer.provider = tracesdk.NewTracerProvider(
+	tracing.provider = tracesdk.NewTracerProvider(
 		// Always be sure to batch in production.
 		tracesdk.WithBatcher(exporter),
 		// Record information about this application in a Resource.
@@ -51,11 +61,11 @@ func (tracer *tracerProviderJaeger) init(tracerIdentifier string) *tracerProvide
 	)
 
 	//Register Tracer Provider
-	otel.SetTracerProvider(tracer.provider)
+	otel.SetTracerProvider(tracing.provider)
 
-	return tracer
+	return tracing
 }
 
-func (tracer *tracerProviderJaeger) Finish(ctx context.Context, identifier string) {
-	tracer.provider.Shutdown(ctx)
+func (tracing Tracing) finish(ctx context.Context, identifier string) {
+	tracing.provider.Shutdown(ctx)
 }

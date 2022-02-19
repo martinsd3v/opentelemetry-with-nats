@@ -22,26 +22,47 @@ type SpanStartOption struct {
 	Value interface{}
 }
 
-type Span struct {
-	provider        *tracerProviderJaeger
+type span struct {
 	traceIdentifier string
-	span            trace.Span
+	traceSpan       trace.Span
 	context         context.Context
+	tracing         Tracing
 }
 
-func New(ctx context.Context) *Span {
-	return &Span{
-		context: ctx,
-	}
-}
-
-func (s *Span) Trace(traceIdentifier string) *Span {
+func (s *span) Trace(traceIdentifier string) *span {
 	s.traceIdentifier = traceIdentifier
-	s.provider = newJaegerTracer(s.traceIdentifier)
+	s.tracing.init(s.traceIdentifier)
 	return s
 }
 
-func (s *Span) getOptions(startOptions ...SpanStartOption) []trace.SpanStartOption {
+func (s *span) Simple(identifier string, opts ...SpanStartOption) (context.Context, spanCloser) {
+	tr := otel.Tracer(identifier)
+	options := s.parseOptions(opts...)
+	s.context, s.traceSpan = tr.Start(s.context, identifier, options...)
+	return s.context, spanCloser{span: *s}
+}
+
+func (s *span) WithNewTrace(traceIdentifier, spanIdentifier string, opts ...SpanStartOption) (context.Context, spanCloser) {
+	s.traceIdentifier = traceIdentifier
+	s.tracing.init(s.traceIdentifier)
+
+	tr := otel.Tracer(spanIdentifier)
+	options := s.parseOptions(opts...)
+	s.context, s.traceSpan = tr.Start(s.context, spanIdentifier, options...)
+	return s.context, spanCloser{span: *s}
+}
+
+func (s *span) ExportSpanContext() SpanContext {
+	return SpanContext{
+		TraceID:    trace.SpanContextFromContext(s.context).TraceID().String(),
+		SpanID:     trace.SpanContextFromContext(s.context).SpanID().String(),
+		Remote:     trace.SpanContextFromContext(s.context).IsRemote(),
+		TraceState: trace.SpanContextFromContext(s.context).TraceState().String(),
+		TraceFlags: byte(trace.SpanContextFromContext(s.context).TraceFlags()),
+	}
+}
+
+func (s *span) parseOptions(startOptions ...SpanStartOption) []trace.SpanStartOption {
 	opts := make([]trace.SpanStartOption, len(startOptions))
 
 	for i, opt := range startOptions {
@@ -53,56 +74,11 @@ func (s *Span) getOptions(startOptions ...SpanStartOption) []trace.SpanStartOpti
 	return opts
 }
 
-func (s *Span) Simple(identifier string, opts ...SpanStartOption) (context.Context, *Span) {
-	tr := otel.Tracer(identifier)
-	options := s.getOptions(opts...)
-	s.context, s.span = tr.Start(s.context, identifier, options...)
-	return s.context, s
-}
+type spanCloser struct{ span }
 
-func (s *Span) WithNewTrace(traceIdentifier, spanIdentifier string, opts ...SpanStartOption) (context.Context, *Span) {
-	s.traceIdentifier = traceIdentifier
-	s.provider = newJaegerTracer(traceIdentifier)
-
-	tr := otel.Tracer(spanIdentifier)
-	options := s.getOptions(opts...)
-	s.context, s.span = tr.Start(s.context, spanIdentifier, options...)
-	return s.context, s
-}
-
-func (s *Span) ExportSpanContext() SpanContext {
-	return SpanContext{
-		TraceID:    trace.SpanContextFromContext(s.context).TraceID().String(),
-		SpanID:     trace.SpanContextFromContext(s.context).SpanID().String(),
-		Remote:     trace.SpanContextFromContext(s.context).IsRemote(),
-		TraceState: trace.SpanContextFromContext(s.context).TraceState().String(),
-		TraceFlags: byte(trace.SpanContextFromContext(s.context).TraceFlags()),
+func (s spanCloser) Finish() {
+	if s.traceSpan != nil {
+		s.traceSpan.End()
 	}
-}
-
-func (s *Span) Finish() {
-	if s.span != nil {
-		s.span.End()
-	}
-	if s.provider != nil {
-		s.provider.Finish(s.context, s.traceIdentifier)
-	}
-}
-
-func ContextFromSpanContext(ctx context.Context, spanContext *SpanContext) context.Context {
-	if spanContext != nil {
-		traceID, _ := trace.TraceIDFromHex(spanContext.TraceID)
-		spanID, _ := trace.SpanIDFromHex(spanContext.SpanID)
-		traceState, _ := trace.ParseTraceState(spanContext.TraceState)
-		newSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
-			TraceID:    traceID,
-			SpanID:     spanID,
-			Remote:     true,
-			TraceState: traceState,
-			TraceFlags: trace.TraceFlags(spanContext.TraceFlags),
-		})
-
-		return trace.ContextWithSpanContext(ctx, newSpanContext)
-	}
-	return ctx
+	s.tracing.finish(s.context, s.traceIdentifier)
 }

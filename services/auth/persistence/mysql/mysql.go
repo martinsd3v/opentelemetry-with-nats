@@ -8,28 +8,30 @@ import (
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
-type mysql struct{}
+type mysql struct {
+	tracing tracer.Tracing
+}
 
-func New() *mysql {
-	return &mysql{}
+func New(tracing tracer.Tracing) *mysql {
+	return &mysql{tracing}
 }
 
 func (m *mysql) FindByEmail(ctx context.Context) {
-	_, span := tracer.New(ctx).WithNewTrace("Mysql", "Mysql/FindByEmail")
+	_, span := m.tracing.New(ctx).WithNewTrace("Mysql", "Mysql/FindByEmail")
 	defer span.Finish()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))
 }
 
 func (m *mysql) Insert(ctx context.Context) {
-	_, span := tracer.New(ctx).WithNewTrace("Mysql", "Mysql/Insert")
+	_, span := m.tracing.New(ctx).WithNewTrace("Mysql", "Mysql/Insert")
 	defer span.Finish()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))
 }
 
 func (m *mysql) Update(ctx context.Context) {
-	_, span := tracer.New(ctx).WithNewTrace("Mysql", "Mysql/Update")
+	_, span := m.tracing.New(ctx).WithNewTrace("Mysql", "Mysql/Update")
 	defer span.Finish()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))

@@ -18,8 +18,8 @@ func Setup(conn *nats.Conn) client {
 	return client{conn: conn}
 }
 
-func (c *client) Auth(ctx context.Context, request events.AuthRequest) (events.AuthResponse, error) {
-	ctx, span := tracer.New(ctx).WithNewTrace("ServiceAuth", "clients/Auth")
+func (c *client) Auth(ctx context.Context, tracing tracer.Tracing, request events.AuthRequest) (events.AuthResponse, error) {
+	ctx, span := tracing.New(ctx).WithNewTrace("ServiceAuth", "clients/Auth")
 	defer span.Finish()
 
 	spanContext := span.ExportSpanContext()

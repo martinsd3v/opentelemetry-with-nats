@@ -22,10 +22,5 @@ func Request(dto RequestDto) (*nats.Msg, error) {
 	data := DataToByte(dto.SpanContext, dto.Data)
 	msg, err := dto.NatsConn.RequestWithContext(dto.Ctx, dto.Queue, data)
 
-	if err != nil {
-		_, span := tracer.New(dto.Ctx).WithNewTrace("Nats/Request", "nats/Error")
-		defer span.Finish()
-	}
-
 	return msg, err
 }
