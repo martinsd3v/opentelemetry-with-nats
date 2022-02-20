@@ -22,29 +22,17 @@ type Options struct {
 	service      string
 }
 
-type Tracer struct {
-	opts     Options
-	Provider *tracesdk.TracerProvider
-	Err      error
-}
-
-func (trc Tracer) Finish() {
-	trc.Provider.Shutdown(context.Background())
-}
-
-func (trc Tracer) New(serviceName string) Tracer {
-	trc.opts.service = serviceName
-	trc.Provider, trc.Err = initJeagerProvider(trc.opts)
-	if trc.Err != nil {
-		return trc
+func Start(opts Options, serviceName string) (func(), error) {
+	opts.service = serviceName
+	provider, err := initJeagerProvider(opts)
+	if err != nil {
+		return nil, err
 	}
-	otel.SetTracerProvider(trc.Provider)
-	return trc
-}
+	otel.SetTracerProvider(provider)
 
-func Start(opts Options, serviceName string) Tracer {
-	trc := Tracer{opts: opts}
-	return trc.New(serviceName)
+	return func() {
+		provider.Shutdown(context.Background())
+	}, nil
 }
 
 func initJeagerProvider(opts Options) (*tracesdk.TracerProvider, error) {

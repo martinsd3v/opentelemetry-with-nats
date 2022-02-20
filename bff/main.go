@@ -13,15 +13,15 @@ import (
 
 func main() {
 	//Tracer
-	trc := provider.Start(provider.Options{
+	shutdown, err := provider.Start(provider.Options{
 		AgentHost:    "localhost",
 		AgentPort:    "6831",
 		AgentConnect: true,
 	}, "Back For Front")
-	defer trc.Finish()
+	defer shutdown()
 
-	if trc.Err != nil {
-		panic(trc.Err)
+	if err != nil {
+		panic(err)
 	}
 
 	//Nats
@@ -40,7 +40,7 @@ func main() {
 		ctx, span := tracer.Span(ctx, "route/auth")
 		defer span.End()
 
-		response, err := natsClients.Auth(ctx, trc, events.AuthRequest{
+		response, err := natsClients.Auth(ctx, events.AuthRequest{
 			Email:    c.FormValue("email"),
 			Password: c.FormValue("password"),
 		})

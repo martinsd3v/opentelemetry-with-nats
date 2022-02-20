@@ -5,27 +5,25 @@ import (
 	"time"
 
 	"github.com/martinsd3v/opentelemetry-with-nats/utils"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
 )
 
-type cache struct {
-	trc provider.Tracer
-}
+type cache struct{}
 
-func New(trc provider.Tracer) *cache {
-	return &cache{trc}
+func New() *cache {
+	return &cache{}
 }
 
 func (m *cache) Get(ctx context.Context) {
-	// _, span := m.trc.NewTracer(ctx, "Cache").Span(ctx, "Memcache/Get")
-	// defer span.Finish()
+	_, span := tracer.Span(ctx, "Memcache/Get")
+	defer span.End()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 50)))
 }
 
 func (m *cache) Set(ctx context.Context) {
-	// _, span := m.trc.NewTracer(ctx, "Cache").Span(ctx, "Memcache/Set")
-	// defer span.Finish()
+	_, span := tracer.Span(ctx, "Memcache/Set")
+	defer span.End()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 50)))
 }

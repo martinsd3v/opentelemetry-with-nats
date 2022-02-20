@@ -5,34 +5,32 @@ import (
 	"time"
 
 	"github.com/martinsd3v/opentelemetry-with-nats/utils"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
 )
 
-type mysql struct {
-	trc provider.Tracer
-}
+type mysql struct{}
 
-func New(trc provider.Tracer) *mysql {
-	return &mysql{trc}
+func New() *mysql {
+	return &mysql{}
 }
 
 func (m *mysql) FindByEmail(ctx context.Context) {
-	// _, span := m.trc.NewTracer(ctx, "Mysql").Span(ctx, "Mysql/FindByEmail")
-	// defer span.Finish()
+	_, span := tracer.Span(ctx, "Mysql/FindByEmail")
+	defer span.End()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))
 }
 
 func (m *mysql) Insert(ctx context.Context) {
-	// _, span := m.trc.NewTracer(ctx, "Mysql").Span(ctx, "Mysql/Insert")
-	// defer span.Finish()
+	_, span := tracer.Span(ctx, "Mysql/Insert")
+	defer span.End()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))
 }
 
 func (m *mysql) Update(ctx context.Context) {
-	// _, span := m.trc.NewTracer(ctx, "Mysql").Span(ctx, "Mysql/Update")
-	// defer span.Finish()
+	_, span := tracer.Span(ctx, "Mysql/Update")
+	defer span.End()
 
 	time.Sleep(time.Millisecond * time.Duration(utils.RandNumber(10, 300)))
 }

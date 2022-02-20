@@ -11,15 +11,15 @@ import (
 
 func main() {
 	//Tracer
-	trc := provider.Start(provider.Options{
+	_, err := provider.Start(provider.Options{
 		AgentHost:    "localhost",
 		AgentPort:    "6831",
 		AgentConnect: true,
 	}, "Service Auth")
-	defer trc.Finish()
+	// defer shutdown()
 
-	if trc.Err != nil {
-		panic(trc.Err)
+	if err != nil {
+		panic(err)
 	}
 
 	//Nats
@@ -32,7 +32,7 @@ func main() {
 		panic(natsServer.Error)
 	}
 
-	events.Setup(natsServer.Conn, trc)
+	events.Setup(natsServer.Conn)
 
 	fmt.Println("RUN AUTH MICRO-SERVICE")
 	runtime.Goexit()
