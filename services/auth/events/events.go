@@ -40,7 +40,7 @@ func (e *event) auth(msg *nats.Msg) {
 		spanConfig, err := natsUtil.ByteToData(msg.Data, &request)
 
 		ctx := context.Background()
-		ctx = provider.ImportContext(ctx, spanConfig)
+		ctx = provider.InjectContext(ctx, spanConfig)
 		ctx, span := e.trc.Span(ctx, "events/auth")
 		defer span.End()
 

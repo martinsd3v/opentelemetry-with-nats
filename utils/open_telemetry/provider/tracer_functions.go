@@ -24,7 +24,7 @@ func ExportSpanContext(ctx context.Context) SpanContext {
 	}
 }
 
-func ImportContext(ctx context.Context, spanContext *SpanContext) context.Context {
+func InjectContext(ctx context.Context, spanContext *SpanContext) context.Context {
 	if spanContext != nil {
 		traceID, _ := trace.TraceIDFromHex(spanContext.TraceID)
 		spanID, _ := trace.SpanIDFromHex(spanContext.SpanID)
@@ -39,6 +39,5 @@ func ImportContext(ctx context.Context, spanContext *SpanContext) context.Contex
 
 		return trace.ContextWithSpanContext(ctx, newSpanContext)
 	}
-
 	return ctx
 }

@@ -12,9 +12,7 @@ import (
 func main() {
 	//Tracer
 	trc := provider.Start(provider.Options{
-		AgentHost:    "localhost",
-		AgentPort:    "6831",
-		AgentConnect: true,
+		EndpointURL: "http://localhost:14268/api/traces",
 	}, "Service Auth")
 
 	if trc.Err != nil {
