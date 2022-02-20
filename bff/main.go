@@ -8,20 +8,19 @@ import (
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
 )
 
 func main() {
 	//Tracer
-	shutdown, err := provider.Start(provider.Options{
+	trc := provider.Start(provider.Options{
 		AgentHost:    "localhost",
 		AgentPort:    "6831",
 		AgentConnect: true,
 	}, "Back For Front")
-	defer shutdown()
+	defer trc.Finish()
 
-	if err != nil {
-		panic(err)
+	if trc.Err != nil {
+		panic(trc.Err)
 	}
 
 	//Nats
@@ -37,10 +36,11 @@ func main() {
 	e := echo.New()
 	e.POST("/auth", func(c echo.Context) error {
 		ctx := c.Request().Context()
-		ctx, span := tracer.Span(ctx, "route/auth")
+
+		ctx, span := trc.Span(ctx, "route/auth")
 		defer span.End()
 
-		response, err := natsClients.Auth(ctx, events.AuthRequest{
+		response, err := natsClients.Auth(ctx, trc, events.AuthRequest{
 			Email:    c.FormValue("email"),
 			Password: c.FormValue("password"),
 		})

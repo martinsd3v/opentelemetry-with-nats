@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -9,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Options struct {
@@ -22,17 +24,34 @@ type Options struct {
 	service      string
 }
 
-func Start(opts Options, serviceName string) (func(), error) {
-	opts.service = serviceName
-	provider, err := initJeagerProvider(opts)
-	if err != nil {
-		return nil, err
-	}
-	otel.SetTracerProvider(provider)
+type Tracer struct {
+	opts     Options
+	provider *tracesdk.TracerProvider
+	Err      error
+}
 
-	return func() {
-		provider.Shutdown(context.Background())
-	}, nil
+func (trc Tracer) Span(ctx context.Context, identifier string) (context.Context, trace.Span) {
+	return trc.provider.Tracer(identifier).Start(ctx, identifier)
+}
+
+func (trc Tracer) Finish() {
+	fmt.Println("Finalizou aqui")
+	trc.provider.Shutdown(context.Background())
+}
+
+func (trc Tracer) New(serviceName string) Tracer {
+	trc.opts.service = serviceName
+	trc.provider, trc.Err = initJeagerProvider(trc.opts)
+	if trc.Err != nil {
+		return trc
+	}
+	otel.SetTracerProvider(trc.provider)
+	return trc
+}
+
+func Start(opts Options, serviceName string) Tracer {
+	trc := Tracer{opts: opts}
+	return trc.New(serviceName)
 }
 
 func initJeagerProvider(opts Options) (*tracesdk.TracerProvider, error) {

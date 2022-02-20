@@ -3,8 +3,7 @@ package nats
 import (
 	"context"
 
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
-
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
 	"github.com/nats-io/nats.go"
 )
 
@@ -13,7 +12,7 @@ type RequestDto struct {
 	Ctx         context.Context
 	Queue       string
 	Data        interface{}
-	SpanContext *tracer.SpanContext
+	SpanContext *provider.SpanContext
 	NatsConn    *nats.Conn
 }
 

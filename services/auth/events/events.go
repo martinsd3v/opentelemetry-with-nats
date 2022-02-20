@@ -5,21 +5,22 @@ import (
 
 	useCase "github.com/martinsd3v/opentelemetry-with-nats/services/auth/use_cases"
 	natsUtil "github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
 
 	"github.com/nats-io/nats.go"
 )
 
 type event struct {
 	conn *nats.Conn
+	trc  provider.Tracer
 }
 
 const (
 	QueueAuth = "queue-auth"
 )
 
-func Setup(conn *nats.Conn) {
-	e := event{conn}
+func Setup(conn *nats.Conn, trc provider.Tracer) {
+	e := event{conn, trc}
 	conn.QueueSubscribe(QueueAuth, "queue", e.auth)
 }
 
@@ -39,8 +40,8 @@ func (e *event) auth(msg *nats.Msg) {
 		spanConfig, err := natsUtil.ByteToData(msg.Data, &request)
 
 		ctx := context.Background()
-		ctx = tracer.ImportContext(ctx, spanConfig)
-		ctx, span := tracer.Span(ctx, "events/auth")
+		ctx = provider.ImportContext(ctx, spanConfig)
+		ctx, span := e.trc.Span(ctx, "events/auth")
 		defer span.End()
 
 		dto := natsUtil.RespondDto{
@@ -56,7 +57,7 @@ func (e *event) auth(msg *nats.Msg) {
 			return
 		}
 
-		services := useCase.New()
+		services := useCase.New(e.trc)
 		services.HashPassword(ctx)
 		response.Auth = services.AuthUser(ctx, request.Email, request.Password)
 
