@@ -3,21 +3,25 @@ package main
 import (
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/clients"
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
-
-	"github.com/labstack/echo/v4"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/tracer"
 )
 
 func main() {
-	//Tracing
-	tracing := tracer.SetupJeagerTracer(tracer.Options{
-		EndpointURL: "http://localhost:14268/api/traces",
-	})
-	if tracing.Error != nil {
-		panic(tracing.Error)
+	//Tracer
+	trc := provider.Start(provider.Options{
+		AgentHost:    "localhost",
+		AgentPort:    "6831",
+		AgentConnect: true,
+	}, "Back For Front")
+	defer trc.Finish()
+
+	if trc.Err != nil {
+		panic(trc.Err)
 	}
 
 	//Nats
@@ -33,28 +37,10 @@ func main() {
 	e := echo.New()
 	e.POST("/auth", func(c echo.Context) error {
 		ctx := c.Request().Context()
-		ctx, span := tracing.New(ctx).WithNewTrace("Back For Front", "route/auth")
-		defer span.Finish()
+		ctx, span := tracer.Span(ctx, "route/auth")
+		defer span.End()
 
-		_, sp2 := tracing.New(ctx).Simple("span2")
-		defer sp2.Finish()
-
-		_, sp44 := tracing.New(ctx).Simple("span2")
-		defer sp44.Finish()
-
-		ka2, spa33s := tracing.New(ctx).Trace("Nome aqui").Simple("Hahahaha")
-		defer spa33s.Finish()
-
-		_, sp443 := tracing.New(ka2).Simple("hehehehe")
-		defer sp443.Finish()
-
-		ctx2, sp1 := tracing.New(ctx).WithNewTrace("Trace1", "span1")
-		defer sp1.Finish()
-
-		ctx, sp3 := tracing.New(ctx2).WithNewTrace("Trace3", "span3")
-		defer sp3.Finish()
-
-		response, err := natsClients.Auth(ctx, tracing, events.AuthRequest{
+		response, err := natsClients.Auth(ctx, trc, events.AuthRequest{
 			Email:    c.FormValue("email"),
 			Password: c.FormValue("password"),
 		})

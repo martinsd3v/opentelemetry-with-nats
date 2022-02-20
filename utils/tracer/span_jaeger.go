@@ -22,47 +22,42 @@ type SpanStartOption struct {
 	Value interface{}
 }
 
-type span struct {
-	traceIdentifier string
-	traceSpan       trace.Span
-	context         context.Context
-	tracing         Tracing
+type Tracer struct {
+	identifier string
+	tracing    *tracing
+	context    context.Context
+	tracer     trace.Tracer
 }
 
-func (s *span) Trace(traceIdentifier string) *span {
-	s.traceIdentifier = traceIdentifier
-	s.tracing.init(s.traceIdentifier)
-	return s
+func (t Tracer) NewTracer(ctx context.Context, identifier string) Tracer {
+	t.context = ctx
+	t.identifier = identifier
+	t.tracing = t.tracing.init(t.identifier)
+	return t
 }
 
-func (s *span) Simple(identifier string, opts ...SpanStartOption) (context.Context, spanCloser) {
-	tr := otel.Tracer(identifier)
-	options := s.parseOptions(opts...)
-	s.context, s.traceSpan = tr.Start(s.context, identifier, options...)
-	return s.context, spanCloser{span: *s}
+func (t Tracer) Finish() {
+	t.tracing.Finish(t.context, t.identifier)
 }
 
-func (s *span) WithNewTrace(traceIdentifier, spanIdentifier string, opts ...SpanStartOption) (context.Context, spanCloser) {
-	s.traceIdentifier = traceIdentifier
-	s.tracing.init(s.traceIdentifier)
-
-	tr := otel.Tracer(spanIdentifier)
-	options := s.parseOptions(opts...)
-	s.context, s.traceSpan = tr.Start(s.context, spanIdentifier, options...)
-	return s.context, spanCloser{span: *s}
+func (t *Tracer) Span(ctx context.Context, identifier string, opts ...SpanStartOption) (context.Context, Span) {
+	tr := otel.Tracer(t.identifier)
+	options := t.parseOptions(opts...)
+	ctx, spn := tr.Start(ctx, identifier, options...)
+	return ctx, Span{spn}
 }
 
-func (s *span) ExportSpanContext() SpanContext {
+func (t Tracer) ExportSpanContext() SpanContext {
 	return SpanContext{
-		TraceID:    trace.SpanContextFromContext(s.context).TraceID().String(),
-		SpanID:     trace.SpanContextFromContext(s.context).SpanID().String(),
-		Remote:     trace.SpanContextFromContext(s.context).IsRemote(),
-		TraceState: trace.SpanContextFromContext(s.context).TraceState().String(),
-		TraceFlags: byte(trace.SpanContextFromContext(s.context).TraceFlags()),
+		TraceID:    trace.SpanContextFromContext(t.context).TraceID().String(),
+		SpanID:     trace.SpanContextFromContext(t.context).SpanID().String(),
+		Remote:     trace.SpanContextFromContext(t.context).IsRemote(),
+		TraceState: trace.SpanContextFromContext(t.context).TraceState().String(),
+		TraceFlags: byte(trace.SpanContextFromContext(t.context).TraceFlags()),
 	}
 }
 
-func (s *span) parseOptions(startOptions ...SpanStartOption) []trace.SpanStartOption {
+func (t Tracer) parseOptions(startOptions ...SpanStartOption) []trace.SpanStartOption {
 	opts := make([]trace.SpanStartOption, len(startOptions))
 
 	for i, opt := range startOptions {
@@ -74,11 +69,10 @@ func (s *span) parseOptions(startOptions ...SpanStartOption) []trace.SpanStartOp
 	return opts
 }
 
-type spanCloser struct{ span }
+type Span struct {
+	span trace.Span
+}
 
-func (s spanCloser) Finish() {
-	if s.traceSpan != nil {
-		s.traceSpan.End()
-	}
-	s.tracing.finish(s.context, s.traceIdentifier)
+func (s Span) Finish() {
+	s.span.End()
 }

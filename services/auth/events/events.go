@@ -5,22 +5,23 @@ import (
 
 	useCase "github.com/martinsd3v/opentelemetry-with-nats/services/auth/use_cases"
 	natsUtil "github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/nats-io/nats.go"
 )
 
 type event struct {
-	conn    *nats.Conn
-	tracing tracer.Tracing
+	conn *nats.Conn
+	trc  provider.Tracer
 }
 
 const (
 	QueueAuth = "queue-auth"
 )
 
-func Setup(conn *nats.Conn, tracing tracer.Tracing) {
-	e := event{conn, tracing}
+func Setup(conn *nats.Conn, trc provider.Tracer) {
+	e := event{conn, trc}
 	conn.QueueSubscribe(QueueAuth, "queue", e.auth)
 }
 
@@ -39,19 +40,18 @@ func (e *event) auth(msg *nats.Msg) {
 		request, response := AuthRequest{}, AuthResponse{}
 		spanConfig, err := natsUtil.ByteToData(msg.Data, &request)
 
-		ctx := tracer.ContextFromSpanContext(context.Background(), spanConfig)
-		ctx, span := e.tracing.New(ctx).WithNewTrace("ServiceAuth", "events/auth", tracer.SpanStartOption{
-			Key:   "Receive data from nats",
-			Value: request,
-		})
-		defer span.Finish()
+		ctx := tracer.GetContextFromSpanContext(context.Background(), spanConfig)
+		// ctx, span := e.trc.NewTracer(ctx, "ServiceAuth").Span(ctx, "events/auth", tracer.SpanStartOption{
+		// 	Key:   "Receive data from nats",
+		// 	Value: request,
+		// })
+		// defer span.Finish()
 
 		dto := natsUtil.RespondDto{
 			SpanContext: spanConfig,
 			NatsMsg:     *msg,
 			Data:        response,
 		}
-		natsUtil.Respond(dto)
 
 		if err != nil {
 			response.Error = err
@@ -60,7 +60,7 @@ func (e *event) auth(msg *nats.Msg) {
 			return
 		}
 
-		services := useCase.New(e.tracing)
+		services := useCase.New(e.trc)
 		services.HashPassword(ctx)
 		response.Auth = services.AuthUser(ctx, request.Email, request.Password)
 

@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -12,60 +13,64 @@ import (
 )
 
 type Options struct {
-	EndpointURL string `json:"endpointUrl"`
-	AgentHost   string `json:"agentHost"`
-	AgentPort   string `json:"agentPort"`
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	identifier  string
+	AgentConnect bool   `json:"agentConnect"`
+	AgentHost    string `json:"agentHost"`
+	AgentPort    string `json:"agentPort"`
+	EndpointURL  string `json:"endpointUrl"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
 }
 
-type Tracing struct {
+type tracing struct {
 	provider *tracesdk.TracerProvider
 	options  Options
-	Error    error
 }
 
-func SetupJeagerTracer(options Options) Tracing {
-	trc := Tracing{options: options}
-	trc.init(options.identifier)
-	return trc
+func New(options Options) Tracer {
+	trc := tracing{options: options}
+	return Tracer{tracing: &trc}
 }
 
-func (tracing Tracing) New(ctx context.Context) *span {
-	return &span{
-		context: ctx,
-		tracing: tracing,
-	}
-}
+func (tr tracing) init(identifier string) *tracing {
+	fmt.Println("Iniciou :" + identifier)
 
-func (tracing *Tracing) init(tracerIdentifier string) *Tracing {
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(
-		jaeger.WithEndpoint("http://localhost:14268/api/traces"),
-		jaeger.WithUsername(""),
-		jaeger.WithPassword(""),
+	fmt.Println("Tenta conectar UDP")
+	exporter, err := jaeger.New(jaeger.WithAgentEndpoint(
+		jaeger.WithAgentHost(tr.options.AgentHost),
+		jaeger.WithAgentPort(tr.options.AgentPort),
 	))
+
 	if err != nil {
-		tracing.Error = err
-		return nil
+		fmt.Println("Tenta conectar TCP")
+		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(
+			jaeger.WithEndpoint(tr.options.EndpointURL),
+			jaeger.WithUsername(tr.options.Username),
+			jaeger.WithPassword(tr.options.Username),
+		))
+		if err != nil {
+			fmt.Println("Error Jaeger :", err)
+			return nil
+		}
 	}
-	tracing.provider = tracesdk.NewTracerProvider(
+
+	tr.provider = tracesdk.NewTracerProvider(
 		// Always be sure to batch in production.
 		tracesdk.WithBatcher(exporter),
 		// Record information about this application in a Resource.
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(tracerIdentifier),
+			semconv.ServiceNameKey.String(identifier),
 			attribute.String("environment", "development"),
 		)),
 	)
 
 	//Register Tracer Provider
-	otel.SetTracerProvider(tracing.provider)
+	otel.SetTracerProvider(tr.provider)
 
-	return tracing
+	return &tr
 }
 
-func (tracing Tracing) finish(ctx context.Context, identifier string) {
-	tracing.provider.Shutdown(ctx)
+func (tr tracing) Finish(ctx context.Context, identifier string) {
+	fmt.Println("Finalizou :" + identifier)
+	tr.provider.Shutdown(ctx)
 }

@@ -6,16 +6,20 @@ import (
 
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
 )
 
 func main() {
-	//Tracing
-	tracing := tracer.SetupJeagerTracer(tracer.Options{
-		EndpointURL: "http://localhost:14268/api/traces",
-	})
-	if tracing.Error != nil {
-		panic(tracing.Error)
+	//Tracer
+	trc := provider.Start(provider.Options{
+		AgentHost:    "localhost",
+		AgentPort:    "6831",
+		AgentConnect: true,
+	}, "Service Auth")
+	defer trc.Finish()
+
+	if trc.Err != nil {
+		panic(trc.Err)
 	}
 
 	//Nats
@@ -28,7 +32,7 @@ func main() {
 		panic(natsServer.Error)
 	}
 
-	events.Setup(natsServer.Conn, tracing)
+	events.Setup(natsServer.Conn, trc)
 
 	fmt.Println("RUN AUTH MICRO-SERVICE")
 	runtime.Goexit()
