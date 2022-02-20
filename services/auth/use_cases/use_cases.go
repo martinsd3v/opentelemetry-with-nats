@@ -8,32 +8,30 @@ import (
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
 )
 
-type useCase struct {
-	trc provider.Tracer
-}
+type useCase struct{}
 
-func New(trc provider.Tracer) *useCase {
-	return &useCase{trc}
+func New() *useCase {
+	return &useCase{}
 }
 
 func (m *useCase) AuthUser(ctx context.Context, email, password string) bool {
-	ctx, span := m.trc.Span(ctx, "usecases/AuthUser")
+	ctx, span := provider.Span(ctx, "usecases/AuthUser")
 	defer span.End()
 
-	repository := mysql.New(m.trc)
+	repository := mysql.New()
 	repository.FindByEmail(ctx)
 	repository.Insert(ctx)
 
-	redis := cache.New(m.trc)
+	redis := cache.New()
 	redis.Get(ctx)
 
 	return email == "email@gmail.com" && password == "password"
 }
 
 func (m *useCase) HashPassword(ctx context.Context) {
-	ctx, span := m.trc.Span(ctx, "usecases/HashPassword")
+	ctx, span := provider.Span(ctx, "usecases/HashPassword")
 	defer span.End()
 
-	repository := mysql.New(m.trc)
+	repository := mysql.New()
 	repository.Update(ctx)
 }

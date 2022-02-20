@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Options struct {
@@ -28,10 +27,6 @@ type Tracer struct {
 	opts     Options
 	provider *tracesdk.TracerProvider
 	Err      error
-}
-
-func (trc Tracer) Span(ctx context.Context, identifier string) (context.Context, trace.Span) {
-	return trc.provider.Tracer(identifier).Start(ctx, identifier)
 }
 
 func (trc Tracer) Finish() {

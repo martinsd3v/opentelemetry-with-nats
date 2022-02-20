@@ -18,8 +18,8 @@ func Setup(conn *nats.Conn) client {
 	return client{conn}
 }
 
-func (c *client) Auth(ctx context.Context, trc provider.Tracer, request events.AuthRequest) (events.AuthResponse, error) {
-	ctx, span := trc.Span(ctx, "clients/Auths")
+func (c *client) Auth(ctx context.Context, request events.AuthRequest) (events.AuthResponse, error) {
+	ctx, span := provider.Span(ctx, "clients/Auths")
 	defer span.End()
 
 	spanContext := provider.ExportSpanContext(ctx)

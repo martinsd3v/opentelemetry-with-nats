@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -40,4 +43,26 @@ func InjectContext(ctx context.Context, spanContext *SpanContext) context.Contex
 		return trace.ContextWithSpanContext(ctx, newSpanContext)
 	}
 	return ctx
+}
+
+func Span(ctx context.Context, identifier string, opts ...SpanStartOption) (context.Context, trace.Span) {
+	options := parseOptions(opts...)
+	return otel.Tracer(identifier).Start(ctx, identifier, options...)
+}
+
+type SpanStartOption struct {
+	Key   string
+	Value interface{}
+}
+
+func parseOptions(startOptions ...SpanStartOption) []trace.SpanStartOption {
+	opts := make([]trace.SpanStartOption, len(startOptions))
+
+	for i, opt := range startOptions {
+		value, _ := json.Marshal(opt.Value)
+		attr := attribute.String(opt.Key, string(value))
+		opts[i] = trace.WithAttributes(attr)
+	}
+
+	return opts
 }

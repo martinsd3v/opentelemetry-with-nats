@@ -29,7 +29,7 @@ func main() {
 		panic(natsServer.Error)
 	}
 
-	events.Setup(natsServer.Conn, trc)
+	events.Setup(natsServer.Conn)
 
 	fmt.Println("RUN AUTH MICRO-SERVICE")
 	runtime.Goexit()

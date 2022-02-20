@@ -37,10 +37,10 @@ func main() {
 	e.POST("/auth", func(c echo.Context) error {
 		ctx := c.Request().Context()
 
-		ctx, span := trc.Span(ctx, "route/auth")
+		ctx, span := provider.Span(ctx, "route/auth")
 		defer span.End()
 
-		response, err := natsClients.Auth(ctx, trc, events.AuthRequest{
+		response, err := natsClients.Auth(ctx, events.AuthRequest{
 			Email:    c.FormValue("email"),
 			Password: c.FormValue("password"),
 		})
