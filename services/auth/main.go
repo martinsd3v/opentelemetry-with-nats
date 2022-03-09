@@ -12,7 +12,7 @@ import (
 func main() {
 	//Tracer
 	trc := provider.Start(provider.Options{
-		EndpointURL: "http://localhost:14268/api/traces",
+		EndpointURL: "localhost:14250",
 	}, "Service Auth")
 
 	if trc.Err != nil {

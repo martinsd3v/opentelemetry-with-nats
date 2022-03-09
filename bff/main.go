@@ -8,14 +8,13 @@ import (
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 func main() {
 	//Tracer
 	trc := provider.Start(provider.Options{
-		AgentHost:    "localhost",
-		AgentPort:    "6831",
-		AgentConnect: true,
+		EndpointURL: "localhost:14250",
 	}, "Back For Front")
 	defer trc.Finish()
 
@@ -34,6 +33,8 @@ func main() {
 
 	//Echo
 	e := echo.New()
+	e.Use(otelecho.Middleware("Back For Front Middleware"))
+
 	e.POST("/auth", func(c echo.Context) error {
 		ctx := c.Request().Context()
 
