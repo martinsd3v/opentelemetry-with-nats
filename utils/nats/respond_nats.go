@@ -1,14 +1,14 @@
 package nats
 
 import (
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 	"github.com/nats-io/nats.go"
 )
 
 //RespondDto data transfer object
 type RespondDto struct {
 	Data        interface{}
-	SpanContext *provider.SpanContext
+	SpanContext *tracer.SpanContext
 	NatsMsg     nats.Msg
 }
 

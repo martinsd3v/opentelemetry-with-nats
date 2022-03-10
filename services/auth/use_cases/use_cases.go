@@ -5,7 +5,7 @@ import (
 
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/persistence/cache"
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/persistence/mysql"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
 type useCase struct{}
@@ -15,7 +15,7 @@ func New() *useCase {
 }
 
 func (m *useCase) AuthUser(ctx context.Context, email, password string) bool {
-	ctx, span := provider.Span(ctx, "usecases/AuthUser")
+	ctx, span := tracer.Span(ctx, "usecases/AuthUser")
 	defer span.End()
 
 	repository := mysql.New()
@@ -29,7 +29,7 @@ func (m *useCase) AuthUser(ctx context.Context, email, password string) bool {
 }
 
 func (m *useCase) HashPassword(ctx context.Context) {
-	ctx, span := provider.Span(ctx, "usecases/HashPassword")
+	ctx, span := tracer.Span(ctx, "usecases/HashPassword")
 	defer span.End()
 
 	repository := mysql.New()

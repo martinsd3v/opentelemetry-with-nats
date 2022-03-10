@@ -5,7 +5,7 @@ import (
 
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	natsUtil "github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 
 	"github.com/nats-io/nats.go"
 )
@@ -19,10 +19,10 @@ func Setup(conn *nats.Conn) client {
 }
 
 func (c *client) Auth(ctx context.Context, request events.AuthRequest) (events.AuthResponse, error) {
-	ctx, span := provider.Span(ctx, "clients/Auths")
+	ctx, span := tracer.Span(ctx, "clients/Auths")
 	defer span.End()
 
-	spanContext := provider.ExportSpanContext(ctx)
+	spanContext := tracer.ExportSpanContext(ctx)
 	dto := natsUtil.RequestDto{
 		Ctx:         ctx,
 		Queue:       events.QueueAuth,

@@ -10,4 +10,11 @@ services:
   nats:
     image: nats:latest
     ports:
-      - "4222:4222"    
+      - "4222:4222"
+
+  prometheus:
+    image: prom/prometheus:v2.25.2
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml

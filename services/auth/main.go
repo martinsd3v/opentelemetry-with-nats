@@ -6,13 +6,21 @@ import (
 
 	"github.com/martinsd3v/opentelemetry-with-nats/services/auth/events"
 	"github.com/martinsd3v/opentelemetry-with-nats/utils/nats"
-	"github.com/martinsd3v/opentelemetry-with-nats/utils/open_telemetry/provider"
+	"github.com/martinsd3v/opentelemetry-with-nats/utils/tracer"
 )
 
 func main() {
 	//Tracer
-	trc := provider.Start(provider.Options{
-		EndpointURL: "http://localhost:14268/api/traces",
+	trc := tracer.Start(tracer.Options{
+		Environment: "dev",
+		Jaeger: tracer.Jaeger{
+			Enabled:      true,
+			CollectorURL: "http://localhost:14268/api/traces",
+		},
+		SigNoz: tracer.SigNoz{
+			Enabled:      false,
+			CollectorURL: "192.168.1.5:4317",
+		},
 	}, "Service Auth")
 
 	if trc.Err != nil {
